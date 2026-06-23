@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Projects</title>
+</head>
+<body>
+
+<h2>Projects</h2>
+
+<form method="POST">
+
+    <label>Project Name</label>
+    <input type="text" name="project_name">
+
+    <label>Location</label>
+    <input type="text" name="location">
+
+    <label>Budget</label>
+    <input type="number" name="budget">
+
+    <button type="submit">
+        Save Project
+    </button>
+
+</form>
+
+<hr>
+
+<table border="1">
+
+    <tr>
+        <th>ID</th>
+        <th>Project Name</th>
+        <th>Location</th>
+        <th>Budget</th>
+    </tr>
+
+    {% for project in projects %}
+
+    <tr>
+        <td>{{ project[0] }}</td>
+        <td>{{ project[1] }}</td>
+        <td>{{ project[2] }}</td>
+        <td>{{ project[3] }}</td>
+    </tr>
+
+    {% endfor %}
+
+</table>
+
+</body>
+</html>
