@@ -1,0 +1,49 @@
+<table class="table table-bordered">
+<th>Actions</th>
+<div class="d-flex justify-content-between mb-3">
+
+<a href="/add_supplier"
+class="btn btn-success">
+
++ Add Supplier
+
+</a>
+
+</div>
+<thead>
+<tr>
+    <th>ID</th>
+    <th>Supplier</th>
+    <th>Phone</th>
+    <th>Email</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for supplier in suppliers %}
+
+<tr>
+    <td>{{ supplier[0] }}</td>
+    <td>{{ supplier[1] }}</td>
+    <td>{{ supplier[2] }}</td>
+    <td>{{ supplier[3] }}</td>
+</tr>
+<td>
+<a
+href="/edit_supplier/{{ supplier[0] }}"
+class="btn btn-warning btn-sm">
+Edit
+</a>
+<a
+href="/delete_supplier/{{ supplier[0] }}"
+class="btn btn-danger btn-sm"
+onclick="return confirm('Delete this supplier?')">
+Delete
+</a>
+</td>
+{% endfor %}
+
+</tbody>
+
+</table>
