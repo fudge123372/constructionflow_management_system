@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Purchase Orders{% endblock %}
+{% block page_title %}
+Purchase Orders
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h3>Purchase Orders</h3>
+    <a href="/add_purchase_order" class="btn btn-primary">
+        + Add Purchase Order
+    </a>
+</div>
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Supplier ID</th>
+            <th>Order Date</th>
+            <th>Total Amount</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in purchase_orders %}
+        <tr>
+            <td>{{ order[0] }}</td>
+            <td>{{ order[1] }}</td>
+            <td>{{ order[2] }}</td>
+            <td>{{ order[3] }}</td>
+            <td>
+                <a href="/edit_purchase_order/{{ order[0] }}"
+                   class="btn btn-warning btn-sm">
+                    Edit
+                </a>
+                <a href="/delete_purchase_order/{{ order[0] }}"
+                   class="btn btn-danger btn-sm">
+                    Delete
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

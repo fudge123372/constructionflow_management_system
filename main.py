@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from mydatabase import get_projects, get_suppliers, get_materials , create_project , update_project , delete_project , create_supplier , update_supplier , delete_supplier , login_user
+from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment
+from datetime import date
 
 app = Flask(__name__)
 app.secret_key = "buildtrack123"
@@ -36,14 +37,10 @@ def suppliers():
 
 @app.route("/dashboard")
 def dashboard():
-
     if "user" not in session:
-
         return redirect("/login")
-
     projects = get_projects()
     suppliers = get_suppliers()
-
     return render_template(
         "dashboard.html",
         active_page="dashboard",
@@ -60,6 +57,85 @@ def materials():
         active_page="materials",
         materials=materials
     )
+
+@app.route("/material_requests")
+def material_requests():
+    requests = get_material_requests()
+    return render_template(
+        "material_requests.html",
+        material_requests=requests,
+        active_page="material_requests"
+    )
+
+
+@app.route("/add_material_request", methods=["GET", "POST"])
+def add_material_request():
+
+    if request.method == "POST":
+        create_material_request(
+            request.form["project_id"],
+            session["user_id"],
+            date.today()
+        )
+        return redirect("/material_requests")
+    projects = get_projects()
+    return render_template(
+        "add_material_request.html",
+        projects=projects,
+        active_page="material_requests"
+    )
+
+@app.route("/purchase_orders")
+def purchase_orders():
+    if "user" not in session:
+        return redirect("/login")
+    purchase_orders = get_purchase_orders()
+    return render_template(
+        "purchase_orders.html",
+        active_page="purchase_orders",
+        purchase_orders=purchase_orders
+    )
+
+@app.route("/add_purchase_order", methods=["GET", "POST"])
+def add_purchase_order():
+    if request.method == "POST":
+        create_purchase_order(
+            request.form["supplier_id"],
+            request.form["order_date"],
+            request.form["total_amount"]
+        )
+        return redirect(url_for("purchase_orders"))
+    suppliers = get_suppliers()
+    return render_template(
+        "add_purchase_order.html",
+        suppliers=suppliers,
+        active_page="purchase_orders"
+    )
+
+@app.route("/edit_purchase_order/<int:purchase_order_id>", methods=["GET", "POST"])
+def edit_purchase_order(purchase_order_id):
+    if request.method == "POST":
+        update_purchase_order(
+            purchase_order_id,
+            request.form["supplier_id"],
+            request.form["order_date"],
+            request.form["total_amount"]
+        )
+        return redirect(url_for("purchase_orders"))
+    purchase_order = get_purchase_order(purchase_order_id)
+    suppliers = get_suppliers()
+    return render_template(
+        "edit_purchase_order.html",
+        purchase_order=purchase_order,
+        suppliers=suppliers,
+        active_page="purchase_orders"
+    )
+
+@app.route("/delete_purchase_order/<int:purchase_order_id>")
+def remove_purchase_order(purchase_order_id):
+    delete_purchase_order(purchase_order_id)
+    return redirect(url_for("purchase_orders"))
+
 
 @app.route("/add_project", methods=["GET", "POST"])
 def add_project():
@@ -130,6 +206,7 @@ def edit_supplier(supplier_id):
 def remove_supplier(supplier_id):
     delete_supplier(supplier_id)
     return redirect(url_for("suppliers"))
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -137,21 +214,141 @@ def login():
         password = request.form["password"]
         user = login_user(username, password)
         if user:
-            session["user"] = user[1]   # username
-            session["role"] = user[4]   # role
+            session["user_id"] = user[0]      # User ID
+            session["user"] = user[1]         # Username
+            session["role"] = user[4]  #role
             return redirect("/dashboard")
         return render_template(
             "login.html",
             error="Invalid username or password"
         )
-    return render_template("login.html")
+    return  render_template("login.html")
     return render_template(
-        "login.html",
-        error=None
+     "login.html",
+     error=None   
+    )
+
+@app.route("/approve_request/<int:request_id>")
+def approve_request(request_id):
+    update_material_request(request_id, "Approved")
+    return redirect("/material_requests")
+
+@app.route("/reject_request/<int:request_id>")
+def reject_request(request_id):
+    update_material_request(request_id, "Rejected")
+    return redirect("/material_requests")
+
+@app.route("/request_items")
+def request_items():
+    if "user" not in session:
+        return redirect("/login")
+    items = get_request_items()
+    return render_template(
+        "request_items.html",
+        request_items=items,
+        active_page="request_items"
+    )
+
+@app.route("/add_request_item", methods=["GET", "POST"])
+def add_request_item():
+    if request.method == "POST":
+        create_request_item(
+            request.form["request_id"],
+            request.form["material_id"],
+            request.form["quantity"]
+        )
+        return redirect("/request_items")
+    requests = get_material_requests()
+    materials = get_materials()
+    return render_template(
+        "add_request_item.html",
+        requests=requests,
+        materials=materials,
+        active_page="request_items"
+    )
+
+@app.route("/edit_request_item/<int:request_item_id>", methods=["GET", "POST"])
+def edit_request_item(request_item_id):
+    if request.method == "POST":
+        update_request_item(
+            request_item_id,
+            request.form["material_id"],
+            request.form["quantity"]
+        )
+        return redirect("/request_items")
+    item = get_request_item(request_item_id)
+    materials = get_materials()
+    return render_template(
+        "edit_request_item.html",
+        item=item,
+        materials=materials,
+        active_page="request_items"
+    )
+
+@app.route("/delete_request_item/<int:request_item_id>")
+def delete_request_item_route(request_item_id):
+    delete_request_item(request_item_id)
+    return redirect("/request_items")
+
+@app.route("/payments")
+def payments():
+    if "user" not in session:
+        return redirect("/login")
+    payments = get_payments()
+    return render_template(
+        "payments.html",
+        payments=payments,
+        active_page="payments"
+    )
+
+@app.route("/add_payment", methods=["GET", "POST"])
+def add_payment():
+    if request.method == "POST":
+        create_payment(
+            request.form["purchase_order_id"],
+            request.form["payment_date"],
+            request.form["amount"],
+            request.form["payment_method"],
+            request.form["status"]
+        )
+        return redirect("/payments")
+    purchase_orders = get_purchase_orders()
+    return render_template(
+        "add_payment.html",
+        purchase_orders=purchase_orders,
+        active_page="payments"
     )
 
 
+@app.route("/edit_payment/<int:payment_id>", methods=["GET", "POST"])
+def edit_payment(payment_id):
+    if request.method == "POST":
+        update_payment(
+            payment_id,
+            request.form["purchase_order_id"],
+            request.form["payment_date"],
+            request.form["amount"],
+            request.form["payment_method"],
+            request.form["status"]
+        )
+        return redirect("/payments")
+    payment = get_payment(payment_id)
+    purchase_orders = get_purchase_orders()
+    return render_template(
+        "edit_payment.html",
+        payment=payment,
+        purchase_orders=purchase_orders,
+        active_page="payments"
+    )
 
+@app.route("/delete_payment/<int:payment_id>")
+def remove_payment(payment_id):
+    delete_payment(payment_id)
+    return redirect("/payments")
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
 if __name__ == "__main__":
     app.run(debug=True)

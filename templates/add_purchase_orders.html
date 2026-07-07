@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Add Purchase Order{% endblock %}
+{% block page_title %}
+Add Purchase Order
+{% endblock %}
+{% block content %}
+<div class="card shadow">
+<div class="card-body">
+<form method="POST">
+<div class="mb-3">
+<label>Supplier</label>
+<select name="supplier_id" class="form-control">
+{% for supplier in suppliers %}
+<option value="{{ supplier[0] }}">
+{{ supplier[1] }}
+</option>
+{% endfor %}
+</select>
+</div>
+<div class="mb-3">
+<label>Order Date</label>
+<input
+type="date"
+name="order_date"
+class="form-control"
+required>
+</div>
+<div class="mb-3">
+<label>Total Amount</label>
+<input
+type="number"
+name="total_amount"
+class="form-control"
+required>
+</div>
+<button class="btn btn-success">
+Save Purchase Order
+</button>
+</form>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Request Items{% endblock %}
+{% block page_title %}
+Request Items
+{% endblock %}
+{% block content %}
+<a href="/add_request_item" class="btn btn-success mb-3">
+    + Add Request Item
+</a>
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Request ID</th>
+            <th>Material</th>
+            <th>Quantity</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in request_items %}
+        <tr>
+            <td>{{ item[0] }}</td>
+            <td>{{ item[1] }}</td>
+            <td>{{ item[2] }}</td>
+            <td>{{ item[3] }}</td>
+            <td>
+                <a href="/edit_request_item/{{ item[0] }}"
+                   class="btn btn-warning btn-sm">
+                    Edit
+                </a>
+                <a href="/delete_request_item/{{ item[0] }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('Delete this request item?')">
+                    Delete
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

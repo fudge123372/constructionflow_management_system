@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Edit Purchase Order{% endblock %}
+{% block page_title %}
+Edit Purchase Order
+{% endblock %}
+{% block content %}
+<div class="card shadow">
+<div class="card-body">
+<form method="POST">
+<div class="mb-3">
+<label>Supplier</label>
+<select name="supplier_id" class="form-control">
+{% for supplier in suppliers %}
+<option
+value="{{ supplier[0] }}"
+{% if supplier[0]==purchase_order[1] %}
+selected
+{% endif %}>
+{{ supplier[1] }}
+</option>
+{% endfor %}
+</select>
+</div>
+<div class="mb-3">
+<label>Order Date</label>
+<input
+type="date"
+name="order_date"
+value="{{ purchase_order[2] }}"
+class="form-control">
+</div>
+<div class="mb-3">
+<label>Total Amount</label>
+<input
+type="number"
+name="total_amount"
+value="{{ purchase_order[3] }}"
+class="form-control">
+</div>
+<button class="btn btn-primary">
+Update Purchase Order
+</button>
+</form>
+</div>
+</div>
+{% endblock %}

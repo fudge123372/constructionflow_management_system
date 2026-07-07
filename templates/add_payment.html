@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}
+Add Payment
+{% endblock %}
+{% block page_title %}
+Add Payment
+{% endblock %}
+{% block content %}
+<div class="card shadow">
+<div class="card-body">
+<form method="POST">
+<div class="mb-3">
+<label>Purchase Order</label>
+<select name="purchase_order_id" class="form-control">
+{% for po in purchase_orders %}
+<option value="{{ po[0] }}">
+Purchase Order #{{ po[0] }}
+</option>
+{% endfor %}
+</select>
+</div>
+<div class="mb-3">
+<label>Payment Date</label>
+<input
+type="date"
+name="payment_date"
+class="form-control"
+required>
+</div>
+<div class="mb-3">
+<label>Amount</label>
+<input
+type="number"
+name="amount"
+class="form-control"
+required>
+</div>
+<div class="mb-3">
+<label>Payment Method</label>
+<select
+name="payment_method"
+class="form-control">
+<option>Cash</option>
+<option>Bank Transfer</option>
+<option>Cheque</option>
+<option>Mobile Money</option>
+</select>
+</div>
+<div class="mb-3">
+<label>Status</label>
+<select
+name="status"
+class="form-control">
+<option>Pending</option>
+<option>Completed</option>
+</select>
+</div>
+<button class="btn btn-success">
+Save Payment
+</button>
+</form>
+</div>
+</div>
+{% endblock %}

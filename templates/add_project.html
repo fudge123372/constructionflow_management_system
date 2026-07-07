@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}
+Add Project
+{% endblock %}
+{% block page_title %}
+Add Project
+{% endblock %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label>Project Name</label>
+                <input
+                    type="text"
+                    name="project_name"
+                    class="form-control"
+                    required>
+            </div>
+            <div class="mb-3">
+                <label>Location</label>
+                <input
+                    type="text"
+                    name="location"
+                    class="form-control"
+                    required>
+            </div>
+            <div class="mb-3">
+                <label>Budget</label>
+                <input
+                    type="number"
+                    name="budget"
+                    class="form-control"
+                    required>
+            </div>
+            <button class="btn btn-success">
+                Save Project
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

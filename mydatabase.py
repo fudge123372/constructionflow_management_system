@@ -169,7 +169,255 @@ def login_user(username, password):
     cur.close()
     return user
 
+def create_purchase_order(supplier_id, order_date, total_amount):
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO purchase_orders
+        (supplier_id, order_date, total_amount)
+        VALUES (%s, %s, %s)
+    """, (supplier_id, order_date, total_amount))
+    conn.commit()
+    cur.close()
 
+def get_purchase_orders():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            purchase_orders.purchase_order_id,
+            suppliers.supplier_name,
+            purchase_orders.order_date,
+            purchase_orders.total_amount
+        FROM purchase_orders
+        JOIN suppliers
+        ON purchase_orders.supplier_id = suppliers.supplier_id
+        ORDER BY purchase_order_id
+    """)
+    purchase_orders = cur.fetchall()
+    cur.close()
+    return purchase_orders
+
+def get_purchase_order(purchase_order_id):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM purchase_orders
+        WHERE purchase_order_id=%s
+    """, (purchase_order_id,))
+    purchase_order = cur.fetchone()
+    cur.close()
+    return purchase_order
+
+def update_purchase_order(purchase_order_id, supplier_id, order_date, total_amount):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE purchase_orders
+        SET supplier_id=%s,
+            order_date=%s,
+            total_amount=%s
+        WHERE purchase_order_id=%s
+    """, (supplier_id, order_date, total_amount, purchase_order_id))
+    conn.commit()
+    cur.close()
+
+def delete_purchase_order(purchase_order_id):
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM purchase_orders
+        WHERE purchase_order_id=%s
+    """, (purchase_order_id,))
+    conn.commit()
+    cur.close()
+
+def create_material_request(project_id, requested_by, request_date):
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO material_requests
+        (project_id, requested_by, request_date)
+        VALUES (%s, %s, %s)
+    """, (project_id, requested_by, request_date))
+    conn.commit()
+    cur.close()
+
+def get_material_requests():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            material_requests.request_id,
+            projects.project_name,
+            users.username,
+            material_requests.request_date,
+            material_requests.status
+        FROM material_requests
+        JOIN projects
+        ON material_requests.project_id = projects.project_id
+        JOIN users
+        ON material_requests.requested_by = users.user_id
+        ORDER BY request_id
+    """)
+    requests = cur.fetchall()
+    cur.close()
+    return requests
+
+def get_material_request(request_id):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM material_requests
+        WHERE request_id=%s
+    """, (request_id,))
+    request = cur.fetchone()
+    cur.close()
+    return request
+
+def update_material_request(request_id, status):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE material_requests
+        SET status=%s
+        WHERE request_id=%s
+    """, (status, request_id))
+    conn.commit()
+    cur.close()
+
+def delete_material_request(request_id):
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM material_requests
+        WHERE request_id=%s
+    """, (request_id,))
+    conn.commit()
+    cur.close()
+
+def create_request_item(request_id, material_id, quantity):
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO request_items
+        (request_id, material_id, quantity)
+        VALUES (%s, %s, %s)
+    """, (request_id, material_id, quantity))
+    conn.commit()
+    cur.close()
+
+def get_request_items():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            ri.request_item_id,
+            mr.request_id,
+            m.material_name,
+            ri.quantity
+        FROM request_items ri
+        JOIN material_requests mr
+            ON ri.request_id = mr.request_id
+        JOIN materials m
+            ON ri.material_id = m.material_id
+        ORDER BY ri.request_item_id
+    """)
+    items = cur.fetchall()
+    cur.close()
+    return items
+
+def get_request_item(request_item_id):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM request_items
+        WHERE request_item_id=%s
+    """, (request_item_id,))
+    item = cur.fetchone()
+    cur.close()
+    return item
+
+def update_request_item(request_item_id, material_id, quantity):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE request_items
+        SET material_id=%s,
+            quantity=%s
+        WHERE request_item_id=%s
+    """, (material_id, quantity, request_item_id))
+    conn.commit()
+    cur.close()
+
+def delete_request_item(request_item_id):
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM request_items
+        WHERE request_item_id=%s
+    """, (request_item_id,))
+    conn.commit()
+    cur.close()
+
+def create_payment(purchase_order_id, payment_date, amount, payment_method, status):
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO payments
+        (purchase_order_id, payment_date, amount, payment_method, status)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (purchase_order_id, payment_date, amount, payment_method, status))
+    conn.commit()
+    cur.close()
+   
+
+def get_payments():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            payments.payment_id,
+            purchase_orders.purchase_order_id,
+            payments.payment_date,
+            payments.amount,
+            payments.payment_method,
+            payments.status
+        FROM payments
+        JOIN purchase_orders
+        ON payments.purchase_order_id = purchase_orders.purchase_order_id
+        ORDER BY payment_id
+    """)
+    payments = cur.fetchall()
+    cur.close()
+    return payments
+
+def get_payment(payment_id):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM payments
+        WHERE payment_id=%s
+    """, (payment_id,))
+    payment = cur.fetchone()
+    cur.close()
+    return payment
+
+def update_payment(payment_id, purchase_order_id, payment_date, amount, payment_method, status):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE payments
+        SET purchase_order_id=%s,
+            payment_date=%s,
+            amount=%s,
+            payment_method=%s,
+            status=%s
+        WHERE payment_id=%s
+    """, (
+        purchase_order_id,
+        payment_date,
+        amount,
+        payment_method,
+        status,
+        payment_id
+    ))
+    conn.commit()
+    cur.close()
+
+def delete_payment(payment_id):
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM payments
+        WHERE payment_id=%s
+    """, (payment_id,))
+    conn.commit()
+    cur.close()
 
 if __name__ == "__main__":
     create_project(
