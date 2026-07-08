@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment
+from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions
 from datetime import date
 
 app = Flask(__name__)
@@ -67,6 +67,32 @@ def material_requests():
         active_page="material_requests"
     )
 
+@app.route("/inventory")
+def inventory():
+    if "user" not in session:
+        return redirect("/login")
+    transactions = get_inventory_transactions()
+    return render_template(
+        "inventory.html",
+        transactions=transactions,
+        active_page="inventory"
+    )
+
+@app.route("/stock_in", methods=["GET","POST"])
+def stock_in():
+    if request.method == "POST":
+        stock_in(
+            request.form["material_id"],
+            request.form["quantity"],
+            request.form["reference"]
+        )
+        return redirect("/inventory")
+    materials = get_materials()
+    return render_template(
+        "stock_in.html",
+        materials=materials,
+        active_page="inventory"
+    )
 
 @app.route("/add_material_request", methods=["GET", "POST"])
 def add_material_request():
@@ -207,6 +233,58 @@ def remove_supplier(supplier_id):
     delete_supplier(supplier_id)
     return redirect(url_for("suppliers"))
 
+@app.route("/users")
+def users():
+    if "user" not in session:
+        return redirect("/login")
+    if session["role"] != "Administrator":
+        return "Access Denied", 403
+    users = get_users()
+    return render_template(
+        "users.html",
+        users=users,
+        active_page="users"
+    )
+
+@app.route("/add_user", methods=["GET","POST"])
+def add_user():
+    if request.method == "POST":
+        create_user(
+            request.form["username"],
+            request.form["email"],
+            request.form["password"],
+            request.form["role"]
+        )
+        return redirect("/users")
+    roles = get_roles()
+    return render_template(
+        "add_user.html",
+        roles=roles,
+        active_page="users"
+    )
+
+@app.route("/edit_user/<int:user_id>", methods=["GET", "POST"])
+def edit_user(user_id):
+    if request.method == "POST":
+        update_user(
+            user_id,
+            request.form["username"],
+            request.form["email"],
+            request.form["role"]
+        )
+        return redirect("/users")
+    user = get_user(user_id)
+    return render_template(
+        "edit_user.html",
+        user=user,
+        active_page="users"
+    )
+
+@app.route("/delete_user/<int:user_id>")
+def delete_user_route(user_id):
+    delete_user(user_id)
+    return redirect("/users")
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -223,10 +301,7 @@ def login():
             error="Invalid username or password"
         )
     return  render_template("login.html")
-    return render_template(
-     "login.html",
-     error=None   
-    )
+
 
 @app.route("/approve_request/<int:request_id>")
 def approve_request(request_id):
@@ -345,6 +420,54 @@ def edit_payment(payment_id):
 def remove_payment(payment_id):
     delete_payment(payment_id)
     return redirect("/payments")
+
+@app.route("/roles")
+def roles():
+    if "user" not in session:
+        return redirect("/login")
+    if session["role"] != "Administrator":
+        return "Access Denied",403
+    roles = get_roles()
+    return render_template(
+        "roles.html",
+        roles=roles,
+        active_page="roles"
+    )
+
+@app.route("/add_role", methods=["GET","POST"])
+def add_role():
+    if request.method=="POST":
+        create_role(
+            request.form["role_name"],
+            request.form["description"]
+        )
+        return redirect("/roles")
+    return render_template(
+        "add_role.html",
+        active_page="roles"
+    )
+
+@app.route("/edit_role/<int:role_id>", methods=["GET","POST"])
+def edit_role(role_id):
+    if request.method=="POST":
+        update_role(
+            role_id,
+            request.form["role_name"],
+            request.form["description"]
+        )
+        return redirect("/roles")
+    role=get_role(role_id)
+    return render_template(
+        "edit_role.html",
+        role=role,
+        active_page="roles"
+    )
+
+@app.route("/delete_role/<int:role_id>")
+def remove_role(role_id):
+    delete_role(role_id)
+    return redirect("/roles")
+
 
 @app.route("/logout")
 def logout():

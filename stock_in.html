@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block page_title %}
+Stock In
+{% endblock %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label>Material</label>
+                <select name="material_id" class="form-control">
+                    {% for material in materials %}
+                    <option value="{{ material[0] }}">
+                        {{ material[1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label>Quantity</label>
+                <input type="number" name="quantity" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label>Reference</label>
+                <input type="text" name="reference" class="form-control" placeholder="Purchase Order #12">
+            </div>
+            <button class="btn btn-success">
+                Save
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

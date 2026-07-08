@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block page_title %}
+Inventory
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h3>Inventory Transactions</h3>
+    <a href="/stock_in" class="btn btn-success">
+        Stock In
+    </a>
+</div>
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Material</th>
+            <th>Type</th>
+            <th>Quantity</th>
+            <th>Date</th>
+            <th>Reference</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in transactions %}
+        <tr>
+            <td>{{ t[0] }}</td>
+            <td>{{ t[1] }}</td>
+            <td>
+                {% if t[2] == "IN" %}
+                <span class="badge bg-success">
+                    Stock In
+                </span>
+                {% else %}
+                <span class="badge bg-danger">
+                    Stock Out
+                </span>
+                {% endif %}
+            </td>
+            <td>{{ t[3] }}</td>
+            <td>{{ t[4] }}</td>
+            <td>{{ t[5] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

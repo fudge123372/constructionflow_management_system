@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block page_title %}
+Roles
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h3>Roles</h3>
+    <a href="/add_role" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i>
+        New Role
+    </a>
+</div>
+<div class="card shadow">
+    <div class="card-body">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Role Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role in roles %}
+                <tr>
+                    <td>{{ role[0] }}</td>
+                    <td>{{ role[1] }}</td>
+                    <td>{{ role[2] }}</td>
+                    <td>
+                        <a href="/edit_role/{{ role[0] }}" class="btn btn-warning btn-sm">Edit</a>
+
+                        <a href="/delete_role/{{ role[0] }}" class="btn btn-danger btn-sm"onclick="return confirm('Delete this role?')">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

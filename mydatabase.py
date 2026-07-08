@@ -56,9 +56,7 @@ def delete_project(project_id):
     cur.close()
     print("Project deleted")
 
-
-
-
+    
 # CREATE
 def create_supplier(supplier_name, phone, email):
     cur = conn.cursor()
@@ -168,6 +166,111 @@ def login_user(username, password):
     user = cur.fetchone()
     cur.close()
     return user
+
+def get_users():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT user_id, username, email, role
+        FROM users
+        ORDER BY user_id
+    """)
+    users = cur.fetchall()
+    cur.close()
+    return users
+
+def get_user(user_id):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM users
+        WHERE user_id=%s
+    """, (user_id,))
+    user = cur.fetchone()
+    cur.close()
+    return user
+
+def create_user(username, email, password, role):
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO users
+        (username,email,password,role)
+        VALUES(%s,%s,%s,%s)
+    """,(username,email,password,role))
+    conn.commit()
+    cur.close()
+
+def update_user(user_id, username, email, role):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE users
+        SET username=%s,
+            email=%s,
+            role=%s
+        WHERE user_id=%s
+    """,(username,email,role,user_id))
+    conn.commit()
+    cur.close()
+
+def delete_user(user_id):
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM users
+        WHERE user_id=%s
+    """,(user_id,))
+    conn.commit()
+    cur.close()
+
+def create_role(role_name, description):
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO roles
+        (role_name, description)
+        VALUES (%s, %s)
+    """, (role_name, description))
+    conn.commit()
+    cur.close()
+
+def get_roles():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM roles
+        ORDER BY role_id
+    """)
+    roles = cur.fetchall()
+    cur.close()
+    return roles
+
+def get_role(role_id):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM roles
+        WHERE role_id=%s
+    """, (role_id,))
+    role = cur.fetchone()
+    cur.close()
+    return role
+
+def update_role(role_id, role_name, description):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE roles
+        SET role_name=%s,
+            description=%s
+        WHERE role_id=%s
+    """,(role_name, description, role_id))
+    conn.commit()
+    cur.close()
+
+def delete_role(role_id):
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM roles
+        WHERE role_id=%s
+    """,(role_id,))
+    conn.commit()
+    cur.close()
 
 def create_purchase_order(supplier_id, order_date, total_amount):
     cur = conn.cursor()
@@ -287,6 +390,25 @@ def delete_material_request(request_id):
     """, (request_id,))
     conn.commit()
     cur.close()
+
+def get_inventory_transactions():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            inventory_transactions.transaction_id,
+            materials.material_name,
+            inventory_transactions.transaction_type,
+            inventory_transactions.quantity,
+            inventory_transactions.transaction_date,
+            inventory_transactions.reference
+        FROM inventory_transactions
+        JOIN materials
+        ON inventory_transactions.material_id = materials.material_id
+        ORDER BY inventory_transactions.transaction_id DESC
+    """)
+    transactions = cur.fetchall()
+    cur.close()
+    return transactions
 
 def create_request_item(request_id, material_id, quantity):
     cur = conn.cursor()
