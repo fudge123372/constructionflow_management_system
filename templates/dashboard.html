@@ -1,14 +1,157 @@
 {% extends "base.html" %}
-
-{% block title %}
-Dashboard
-{% endblock %}
-
 {% block page_title %}
 Dashboard
 {% endblock %}
 {% block content %}
-
-<h3>Welcome, {{ username }} 👋</h3>
-<p class="text-muted">Role: {{ session["role"] }}</p>
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Projects</h6>
+                <h2>{{ total_projects }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-success text-white">
+            <div class="card-body">
+                <h6>Materials</h6>
+                <h2>{{ total_materials }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-warning text-dark">
+            <div class="card-body">
+                <h6>Suppliers</h6>
+                <h2>{{ total_suppliers }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-info text-white">
+            <div class="card-body">
+                <h6>Material Requests</h6>
+                <h2>{{ total_requests }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-danger text-white">
+            <div class="card-body">
+                <h6>Payments</h6>
+                <h2>{{ total_payments }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-dark text-white">
+            <div class="card-body">
+                <h6>Logged In As</h6>
+                <h5>{{ session.user }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                Recent Projects
+            </div>
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>Budget</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects %}
+                    <tr>
+                        <td>{{ project[1] }}</td>
+                        <td>{{ project[2] }}</td>
+                        <td>KES {{ project[3] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                Recent Inventory
+            </div>
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Type</th>
+                        <th>Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in inventory %}
+                    <tr>
+                        <td>{{ item[1] }}</td>
+                        <td>
+                            {% if item[2]=="IN" %}
+                            <span class="badge bg-success">
+                                Stock In
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger">
+                                Stock Out
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item[3] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<br>
+<div class="card shadow">
+    <div class="card-header bg-warning">
+        Pending Material Requests
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>Requested By</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests %}
+            <tr>
+                <td>{{ request[1] }}</td>
+                <td>{{ request[2] }}</td>
+                <td>
+                    {% if request[4]=="Pending" %}
+                    <span class="badge bg-warning">
+                        Pending
+                    </span>
+                    {% elif request[4]=="Approved" %}
+                    <span class="badge bg-success">
+                        Approved
+                    </span>
+                    {% else %}
+                    <span class="badge bg-danger">
+                        Rejected
+                    </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

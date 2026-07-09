@@ -41,13 +41,27 @@ def dashboard():
         return redirect("/login")
     projects = get_projects()
     suppliers = get_suppliers()
+    materials = get_materials()
+    requests = get_material_requests()
+    payments = get_payments()
+    inventory = get_inventory_transactions()
+    pending_requests = [
+        r for r in requests
+        if r[4] == "Pending"
+    ]
     return render_template(
         "dashboard.html",
         active_page="dashboard",
         total_projects=len(projects),
         total_suppliers=len(suppliers),
-        projects=projects
+        total_materials=len(materials),
+        total_requests=len(requests),
+        total_payments=len(payments),
+        projects=projects[:5],
+        requests=pending_requests[:5],
+        inventory=inventory[:5]
     )
+
 
 @app.route("/materials")
 def materials():
@@ -71,6 +85,12 @@ def material_requests():
 def inventory():
     if "user" not in session:
         return redirect("/login")
+    if session["role"] not in [
+        "Administrator",
+        "Procurement Officer",
+        "Store Keeper"
+    ]:
+        return "Access Denied",403
     transactions = get_inventory_transactions()
     return render_template(
         "inventory.html",
@@ -78,43 +98,51 @@ def inventory():
         active_page="inventory"
     )
 
-
-@app.route("/stock_in", methods=["GET", "POST"])
+@app.route("/stock_in", methods=["GET","POST"])
 def stock_in():
-    if request.method == "POST":
+    if "user" not in session:
+        return redirect("/login")
+    if session["role"] not in [
+        "Administrator",
+        "Store Keeper"
+    ]:
+        return "Access Denied",403
+    if request.method=="POST":
         create_stock_in(
             request.form["material_id"],
             request.form["quantity"],
-            request.form["supplier_id"],
             request.form["reference"],
             session["user_id"]
         )
         return redirect("/inventory")
-    materials = get_materials()
-    suppliers = get_suppliers()
+    materials=get_materials()
     return render_template(
         "stock_in.html",
         materials=materials,
-        suppliers=suppliers,
         active_page="inventory"
     )
 
 @app.route("/stock_out", methods=["GET","POST"])
 def stock_out():
-    if request.method == "POST":
+    if "user" not in session:
+        return redirect("/login")
+    if session["role"] not in [
+        "Administrator",
+        "Store Keeper"
+    ]:
+        return "Access Denied",403
+    if request.method=="POST":
         create_stock_out(
             request.form["material_id"],
             request.form["quantity"],
-            request.form["project_id"],
+            request.form["reference"],
             session["user_id"]
         )
         return redirect("/inventory")
-    materials = get_materials()
-    projects = get_projects()
+    materials=get_materials()
     return render_template(
         "stock_out.html",
         materials=materials,
-        projects=projects,
         active_page="inventory"
     )
 
