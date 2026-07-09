@@ -648,6 +648,9 @@ def delete_payment(payment_id):
     conn.commit()
     cur.close()
 
+
+
+
 if __name__ == "__main__":
     create_project(
         "Apartment Block",
