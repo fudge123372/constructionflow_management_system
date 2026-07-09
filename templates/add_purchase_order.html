@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Edit Purchase Order{% endblock %}
+{% block title %}Add Purchase Order{% endblock %}
 {% block page_title %}
-Edit Purchase Order
+Add Purchase Order
 {% endblock %}
 {% block content %}
 <div class="card shadow">
@@ -11,7 +11,7 @@ Edit Purchase Order
                 <label>Supplier</label>
                 <select name="supplier_id" class="form-control">
                     {% for supplier in suppliers %}
-                    <option value="{{ supplier[0] }}" {% if supplier[0]==purchase_order[1] %} selected {% endif %}>
+                    <option value="{{ supplier[0] }}">
                         {{ supplier[1] }}
                     </option>
                     {% endfor %}
@@ -19,14 +19,14 @@ Edit Purchase Order
             </div>
             <div class="mb-3">
                 <label>Order Date</label>
-                <input type="date" name="order_date" value="{{ purchase_order[2] }}" class="form-control">
+                <input type="date" name="order_date" class="form-control" required>
             </div>
             <div class="mb-3">
                 <label>Total Amount</label>
-                <input type="number" name="total_amount" value="{{ purchase_order[3] }}" class="form-control">
+                <input type="number" name="total_amount" class="form-control" required>
             </div>
-            <button class="btn btn-primary">
-                Update Purchase Order
+            <button class="btn btn-success">
+                Save Purchase Order
             </button>
         </form>
     </div>

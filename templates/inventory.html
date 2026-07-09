@@ -3,10 +3,13 @@
 Inventory
 {% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between mb-3">
-    <h3>Inventory Transactions</h3>
-    <a href="/stock_in" class="btn btn-success">
-        Stock In
+<div class="d-flex gap-2">
+    <h3>inventory transactions</h3>
+    <a href="{{ url_for('stock_in') }}" class="btn btn-success">
+        + Stock In
+    </a>
+    <a href="{{ url_for('stock_out') }}" class="btn btn-danger">
+        - Stock Out
     </a>
 </div>
 <table class="table table-bordered table-striped">
@@ -14,10 +17,12 @@ Inventory
         <tr>
             <th>ID</th>
             <th>Material</th>
-            <th>Type</th>
+            <th>Supplier</th>
+            <th>Transaction</th>
             <th>Quantity</th>
             <th>Date</th>
             <th>Reference</th>
+            <th>Received By</th>
         </tr>
     </thead>
     <tbody>

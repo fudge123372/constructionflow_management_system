@@ -1,49 +1,48 @@
-<table class="table table-bordered">
-<th>Actions</th>
+{% extends "base.html" %}
+{% block page_title %}
+Suppliers
+{% endblock %}
+{% block content %}
 <div class="d-flex justify-content-between mb-3">
-
-<a href="/add_supplier"
-class="btn btn-success">
-
-+ Add Supplier
-
-</a>
-
+    <h3>Suppliers</h3>
+    <a href="/add_supplier" class="btn btn-primary">
+        + Add Supplier
+    </a>
 </div>
-<thead>
-<tr>
-    <th>ID</th>
-    <th>Supplier</th>
-    <th>Phone</th>
-    <th>Email</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for supplier in suppliers %}
-
-<tr>
-    <td>{{ supplier[0] }}</td>
-    <td>{{ supplier[1] }}</td>
-    <td>{{ supplier[2] }}</td>
-    <td>{{ supplier[3] }}</td>
-</tr>
-<td>
-<a
-href="/edit_supplier/{{ supplier[0] }}"
-class="btn btn-warning btn-sm">
-Edit
-</a>
-<a
-href="/delete_supplier/{{ supplier[0] }}"
-class="btn btn-danger btn-sm"
-onclick="return confirm('Delete this supplier?')">
-Delete
-</a>
-</td>
-{% endfor %}
-
-</tbody>
-
-</table>
+<div class="card shadow">
+    <div class="card-body">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Supplier</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th width="180">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for supplier in suppliers %}
+                <tr>
+                    <td>{{ supplier[0] }}</td>
+                    <td>{{ supplier[1] }}</td>
+                    <td>{{ supplier[2] }}</td>
+                    <td>{{ supplier[3] }}</td>
+                    <td>
+                        <a href="/edit_supplier/{{ supplier[0] }}"
+                        class="btn btn-warning btn-sm">
+                            Edit
+                        </a>
+                        <a href="/delete_supplier/{{ supplier[0] }}"
+                        class="btn btn-danger btn-sm"
+                        onclick="return confirm('Delete supplier?')">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

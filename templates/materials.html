@@ -19,7 +19,7 @@ Materials
         </tr>
     </thead>
     <tbody>
-    {% for material in materials %}
+        {% for material in materials %}
         <tr>
             <td>{{ material[0] }}</td>
             <td>{{ material[1] }}</td>
@@ -28,7 +28,7 @@ Materials
             <td>{{ material[3] }}</td> <!-- Quantity -->
             <td>{{ material[4] }}</td> <!-- Price -->
         </tr>
-    {% endfor %}
+        {% endfor %}
     </tbody>
 </table>
 {% endblock %}

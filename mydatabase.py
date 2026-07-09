@@ -395,20 +395,127 @@ def get_inventory_transactions():
     cur = conn.cursor()
     cur.execute("""
         SELECT
-            inventory_transactions.transaction_id,
+            stock_in.stock_in_id,
             materials.material_name,
-            inventory_transactions.transaction_type,
-            inventory_transactions.quantity,
-            inventory_transactions.transaction_date,
-            inventory_transactions.reference
-        FROM inventory_transactions
+            'IN' AS transaction_type,
+            stock_in.quantity,
+            stock_in.received_date,
+            stock_in.reference
+        FROM stock_in
         JOIN materials
-        ON inventory_transactions.material_id = materials.material_id
-        ORDER BY inventory_transactions.transaction_id DESC
+        ON stock_in.material_id = materials.material_id
+
+        UNION ALL
+                
+        SELECT
+            stock_out.stock_out_id,
+            materials.material_name,
+            'OUT',
+            stock_out.quantity,
+            stock_out.issued_date,
+            projects.project_name
+        FROM stock_out
+        JOIN materials
+        ON stock_out.material_id = materials.material_id
+        JOIN projects
+        ON stock_out.project_id = projects.project_id
+
+        ORDER BY 5 DESC;
     """)
-    transactions = cur.fetchall()
+    data = cur.fetchall()
     cur.close()
-    return transactions
+    return data
+
+def create_stock_in(material_id, quantity, supplier_id, reference, received_by):
+    cur = conn.cursor()
+    # Save Stock In transaction
+    cur.execute("""
+        INSERT INTO stock_in
+        (
+            material_id,
+            quantity,
+            supplier_id,
+            reference,
+            received_date,
+            received_by
+        )
+        VALUES
+        (%s,%s,%s,%s,CURRENT_DATE,%s)
+    """, (
+        material_id,
+        quantity,
+        supplier_id,
+        reference,
+        received_by
+    ))
+    # Increase inventory quantity
+    cur.execute("""
+        UPDATE materials
+        SET quantity = quantity + %s
+        WHERE material_id = %s
+    """, (
+        quantity,
+        material_id
+    ))
+    conn.commit()
+    cur.close()
+
+def get_stock_in():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            stock_in.stock_in_id,
+            materials.material_name,
+            stock_in.quantity,
+            stock_in.reference,
+            stock_in.received_date,
+            users.username
+        FROM stock_in
+        JOIN materials
+            ON stock_in.material_id = materials.material_id
+        JOIN users
+            ON stock_in.received_by = users.user_id
+        ORDER BY stock_in.stock_in_id DESC
+    """)
+    stock = cur.fetchall()
+    cur.close()
+    return stock
+
+def create_stock_out(material_id, quantity, project_id, issued_by):
+    cur = conn.cursor()
+    # Check available stock
+    cur.execute("""
+        SELECT quantity
+        FROM materials
+        WHERE material_id=%s
+    """, (material_id,))
+    current_stock = cur.fetchone()[0]
+    quantity = int(quantity)
+    if current_stock < quantity:
+        cur.close()
+        raise Exception("Not enough stock available.")
+    # Save stock out
+    cur.execute("""
+        INSERT INTO stock_out
+        (material_id, quantity, project_id, issued_date, issued_by)
+        VALUES (%s,%s,%s,CURRENT_DATE,%s)
+    """, (
+        material_id,
+        quantity,
+        project_id,
+        issued_by
+    ))
+    # Reduce stock
+    cur.execute("""
+        UPDATE materials
+        SET quantity = quantity - %s
+        WHERE material_id=%s
+    """, (
+        quantity,
+        material_id
+    ))
+    conn.commit()
+    cur.close()
 
 def create_request_item(request_id, material_id, quantity):
     cur = conn.cursor()
