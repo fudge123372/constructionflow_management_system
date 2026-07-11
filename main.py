@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions,create_stock_in,get_stock_in,create_stock_out
+from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions,create_stock_in,get_stock_in,create_stock_out,get_low_stock,get_recent_activity
 from datetime import date
 
 app = Flask(__name__)
@@ -42,8 +42,10 @@ def dashboard():
     projects = get_projects()
     suppliers = get_suppliers()
     materials = get_materials()
+    low_stock = get_low_stock()
     requests = get_material_requests()
     payments = get_payments()
+    activities = get_recent_activity()
     inventory = get_inventory_transactions()
     pending_requests = [
         r for r in requests
@@ -57,11 +59,12 @@ def dashboard():
         total_materials=len(materials),
         total_requests=len(requests),
         total_payments=len(payments),
+        activities=activities,
+        low_stock=low_stock,
         projects=projects[:5],
         requests=pending_requests[:5],
         inventory=inventory[:5]
     )
-
 
 @app.route("/materials")
 def materials():
@@ -134,15 +137,18 @@ def stock_out():
     if request.method=="POST":
         create_stock_out(
             request.form["material_id"],
+            request.form["project_id"],
             request.form["quantity"],
             request.form["reference"],
             session["user_id"]
         )
         return redirect("/inventory")
     materials=get_materials()
+    projects=get_projects()
     return render_template(
         "stock_out.html",
         materials=materials,
+        projects=projects,
         active_page="inventory"
     )
 

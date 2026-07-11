@@ -648,8 +648,45 @@ def delete_payment(payment_id):
     conn.commit()
     cur.close()
 
+def get_low_stock():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM materials
+        WHERE quantity < 20
+        ORDER BY quantity ASC
+    """)
+    materials = cur.fetchall()
+    cur.close()
+    return materials
 
+def get_recent_activity():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            'Material Request Submitted' AS activity,
+            users.username,
+            material_requests.request_date
+        FROM material_requests
+        JOIN users
+        ON material_requests.requested_by = users.user_id
 
+        UNION
+
+        SELECT
+            'Stock Received',
+            users.username,
+            stock_in.received_date
+        FROM stock_in
+        JOIN users
+        ON stock_in.received_by = users.user_id
+
+        ORDER BY 3 DESC
+        LIMIT 10
+    """)
+    activities = cur.fetchall()
+    cur.close()
+    return activities
 
 if __name__ == "__main__":
     create_project(
