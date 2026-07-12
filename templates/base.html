@@ -69,6 +69,16 @@
             padding: 20px;
             color: #666;
         }
+
+        .card {
+            transition: 0.3s;
+            border-radius: 15px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, .2);
+        }
     </style>
     {% block css %}
     {% endblock %}
@@ -103,7 +113,7 @@
         {% endif %}
 
         <!-- Suppliers -->
-       {% if role in ["Administrator","Procurement Officer"] %}
+        {% if role in ["Administrator","Procurement Officer"] %}
         <a href="/suppliers" class="{% if active_page=='suppliers' %}active-link{% endif %}">
             <i class="bi bi-truck"></i>
             Suppliers
@@ -111,14 +121,14 @@
         {% endif %}
 
         <!-- Materials -->
-       {% if role in ["Administrator","Procurement Officer","Store Keeper"] %}
+        {% if role in ["Administrator","Procurement Officer","Store Keeper"] %}
         <a href="/materials" class="{% if active_page=='materials' %}active-link{% endif %}">
             <i class="bi bi-box-seam"></i>
             Materials
         </a>
         {% endif %}
 
-       {% if role in ["Administrator","Procurement Officer","Store Keeper"] %}
+        {% if role in ["Administrator","Procurement Officer","Store Keeper"] %}
         <a href="/inventory" class="{% if active_page=='inventory' %}active-link{% endif %}">
             <i class="bi bi-boxes"></i>
             Inventory
@@ -134,7 +144,7 @@
         {% endif %}
 
         <!-- Purchase Orders -->
-       {% if role in ["Administrator","Procurement Officer","Accountant"] %}
+        {% if role in ["Administrator","Procurement Officer","Accountant"] %}
         <a href="/purchase_orders" class="{% if active_page=='purchase_orders' %}active-link{% endif %}">
             <i class="bi bi-cart"></i>
             Purchase Orders

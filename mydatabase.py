@@ -25,7 +25,10 @@ def create_project(project_name, location, budget):
 # READ
 def get_projects():
     cur = conn.cursor()
-    cur.execute("SELECT * FROM projects")
+    cur.execute("""
+        SELECT * FROM projects
+        ORDER BY project_id
+    """)
     projects = cur.fetchall()
     cur.close()
     return projects
@@ -328,6 +331,32 @@ def delete_purchase_order(purchase_order_id):
         DELETE FROM purchase_orders
         WHERE purchase_order_id=%s
     """, (purchase_order_id,))
+    conn.commit()
+    cur.close()
+
+def get_pending_purchase_orders():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            purchase_order_id,
+            supplier_name,
+            total_amount
+        FROM purchase_orders
+        JOIN suppliers
+        ON purchase_orders.supplier_id = suppliers.supplier_id
+        WHERE payment_status = 'Pending'
+    """)
+    data = cur.fetchall()
+    cur.close()
+    return data
+
+def update_payment_status(payment_id, status):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE payments
+        SET status=%s
+        WHERE payment_id=%s
+    """, (status, payment_id))
     conn.commit()
     cur.close()
 
@@ -643,6 +672,28 @@ def delete_payment(payment_id):
     cur = conn.cursor()
     cur.execute("""
         DELETE FROM payments
+        WHERE payment_id=%s
+    """, (payment_id,))
+    conn.commit()
+    cur.close()
+
+def approve_payment(payment_id, user_id):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE payments
+        SET status='Approved',
+            approved_by=%s,
+            approved_date=CURRENT_DATE
+        WHERE payment_id=%s
+    """, (user_id, payment_id))
+    conn.commit()
+    cur.close()
+
+def reject_payment(payment_id):
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE payments
+        SET status='Rejected'
         WHERE payment_id=%s
     """, (payment_id,))
     conn.commit()

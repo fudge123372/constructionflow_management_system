@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions,create_stock_in,get_stock_in,create_stock_out,get_low_stock,get_recent_activity
+from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions,create_stock_in,get_stock_in,create_stock_out,get_low_stock,get_recent_activity,approve_payment,reject_payment,update_payment_status
 from datetime import date
 
 app = Flask(__name__)
@@ -104,7 +104,7 @@ def inventory():
 @app.route("/stock_in", methods=["GET","POST"])
 def stock_in():
     if "user" not in session:
-        return redirect("/login")
+        return redirect("/loin")
     if session["role"] not in [
         "Administrator",
         "Store Keeper"
@@ -137,9 +137,8 @@ def stock_out():
     if request.method=="POST":
         create_stock_out(
             request.form["material_id"],
-            request.form["project_id"],
             request.form["quantity"],
-            request.form["reference"],
+            request.form["project_id"],
             session["user_id"]
         )
         return redirect("/inventory")
@@ -434,9 +433,11 @@ def payments():
     if "user" not in session:
         return redirect("/login")
     payments = get_payments()
+    pending_orders=get_purchase_orders()
     return render_template(
         "payments.html",
         payments=payments,
+        pending_orders=pending_orders,
         active_page="payments"
     )
 
@@ -459,30 +460,45 @@ def add_payment():
     )
 
 
-@app.route("/edit_payment/<int:payment_id>", methods=["GET", "POST"])
+@app.route("/edit_payment/<int:payment_id>", methods=["GET","POST"])
 def edit_payment(payment_id):
+    if "user" not in session:
+        return redirect("/login")
+    payment = get_payment(payment_id)
     if request.method == "POST":
         update_payment(
             payment_id,
-            request.form["purchase_order_id"],
             request.form["payment_date"],
             request.form["amount"],
             request.form["payment_method"],
             request.form["status"]
         )
         return redirect("/payments")
-    payment = get_payment(payment_id)
-    purchase_orders = get_purchase_orders()
     return render_template(
         "edit_payment.html",
         payment=payment,
-        purchase_orders=purchase_orders,
         active_page="payments"
     )
 
 @app.route("/delete_payment/<int:payment_id>")
-def remove_payment(payment_id):
+def delete_payment_route(payment_id):
+    if "user" not in session:
+        return redirect("/login")
     delete_payment(payment_id)
+    return redirect("/payments")
+
+@app.route("/approve_payment/<int:payment_id>")
+def approve_payment(payment_id):
+    if session["role"] != "Accountant":
+        return "Access Denied",403
+    update_payment_status(payment_id,"Approved")
+    return redirect("/payments")
+
+@app.route("/reject_payment/<int:payment_id>")
+def reject_payment(payment_id):
+    if session["role"] != "Accountant":
+        return "Access Denied",403
+    update_payment_status(payment_id,"Rejected")
     return redirect("/payments")
 
 @app.route("/roles")
