@@ -9,38 +9,69 @@ Add Payment
 <div class="card shadow">
     <div class="card-body">
         <form method="POST">
-            <div class="mb-3">
-                <label>Purchase Order</label>
-                <input type="text" class="form-control" value="PO #{{ purchase_order_id }}" readonly>
-                <input type="hidden" name="purchase_order_id" value="{{ purchase_order_id }}">
-            </div>
-            <div class="mb-3">
-                <label>Payment Date</label>
-                <input type="date" name="payment_date" class="form-control" max="{{ today }}" required>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h5 class="text-primary">
+                                Purchase Order Details
+                            </h5>
+                            <hr>
+                            <p>
+                                <strong>Purchase Order:</strong>
+                                #{{ purchase_order_id }}
+                            </p>
+                            <p>
+                                <strong>Supplier:</strong>
+                                {{ supplier }}
+                            </p>
+                            <p>
+                                <strong>Total Order:</strong>
+                                KES {{ total_amount }}
+                            </p>
+                            <p>
+                                <strong>Remaining Balance:</strong>
+                                <span class="text-danger fw-bold">
+                                    KES {{ balance }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="mb-3">
                 <label>Amount</label>
-                <input type="number" name="amount" class="form-control" required>
+                <input
+                    type="number"
+                    name="amount"
+                    class="form-control"
+                    min="1"
+                    max="{{ balance }}"
+                    step="0.01"
+                    required>
             </div>
             <div class="mb-3">
                 <label>Payment Method</label>
-                <select name="payment_method" class="form-control">
+                <select
+                    name="payment_method"
+                    class="form-control"
+                    required>
+                    <option value="">Select Payment Method</option>
                     <option>Cash</option>
                     <option>Bank Transfer</option>
                     <option>Cheque</option>
-                    <option>Mobile Money</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label>Status</label>
-                <select name="status" class="form-control">
-                    <option>Pending</option>
-                    <option>Completed</option>
+                    <option>M-Pesa</option>
                 </select>
             </div>
             <button class="btn btn-success">
+                <i class="bi bi-cash-stack"></i>
                 Save Payment
             </button>
+            {% if error %}
+            <div class="alert alert-danger mt-3">
+                {{ error }}
+            </div>
+            {% endif %}
         </form>
     </div>
 </div>

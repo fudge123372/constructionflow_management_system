@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions,create_stock_in,get_stock_in,create_stock_out,get_low_stock,get_recent_activity,approve_payment,reject_payment,update_payment_status,total_payments,pending_payments,approved_payments,rejected_payments,get_pending_purchase_orders
+from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions,create_stock_in,get_stock_in,create_stock_out,get_low_stock,get_recent_activity,approve_payment,reject_payment,update_payment_status,total_payments,pending_payments,approved_payments,rejected_payments,get_pending_purchase_orders,get_purchase_order_balance,get_purchase_order_details,get_purchase_orders
 from datetime import datetime,date
 
 today=date.today()
@@ -367,16 +367,19 @@ def login():
         )
     return  render_template("login.html")
 
+@app.route("/approve_payment/<int:payment_id>")
+def approve_payment_route(payment_id):
+    if session["role"] != "Accountant":
+        return "Unauthorized"
+    approve_payment(payment_id)
+    return redirect("/payments")
 
-@app.route("/approve_request/<int:request_id>")
-def approve_request(request_id):
-    update_material_request(request_id, "Approved")
-    return redirect("/material_requests")
-
-@app.route("/reject_request/<int:request_id>")
-def reject_request(request_id):
-    update_material_request(request_id, "Rejected")
-    return redirect("/material_requests")
+@app.route("/reject_payment/<int:payment_id>")
+def reject_payment_route(payment_id):
+    if session["role"] != "Accountant":
+        return "Unauthorized"
+    reject_payment(payment_id)
+    return redirect("/payments")
 
 @app.route("/request_items")
 def request_items():
@@ -447,61 +450,69 @@ def payments():
         active_page="payments"
     )
 
-
-
 @app.route("/add_payment/<int:purchase_order_id>", methods=["GET", "POST"])
 def add_payment(purchase_order_id):
     if "user" not in session:
         return redirect("/login")
-    if session["role"] != "Accountant":
-        return "Access Denied", 403
     if request.method == "POST":
-        payment_date = datetime.strptime(
-            request.form["payment_date"],
-            "%Y-%m-%d"
-        ).date()
-        if payment_date > date.today():
-            return "Future payment dates are not allowed."
+        amount = float(request.form["amount"])
+        balance = get_purchase_order_balance(purchase_order_id)
+        if amount > balance:
+            return f"You cannot pay more than the remaining balance (KES {balance})."
         create_payment(
-            request.form["purchase_order_id"],
-            request.form["payment_date"],
-            request.form["amount"],
-            request.form["payment_method"],
-            request.form["status"]
+            purchase_order_id,
+            amount,
+            request.form["payment_method"]
         )
         return redirect("/payments")
-    purchase_orders = get_purchase_orders()
+    details = get_purchase_order_details(purchase_order_id)
+    supplier = details[0]
+    total_amount= details[1]
+    balance=details[2]
     return render_template(
         "add_payment.html",
-        purchase_orders=purchase_orders,
+        purchase_order_id=purchase_order_id,
+        supplier=details[0],
+        total_amount=total_amount,
+        balance=balance,
+        today=date.today(),
         active_page="payments"
-        )
+    )
 
 
-@app.route("/edit_payment/<int:payment_id>", methods=["GET","POST"])
+@app.route("/edit_payment/<int:payment_id>", methods=["GET", "POST"])
 def edit_payment(payment_id):
     if "user" not in session:
         return redirect("/login")
     payment = get_payment(payment_id)
+    if payment[5] !="Pending":
+        return"""
+    <h2>This paymnent has already been approved or rejected.</h2>
+    <a href='/payments'>Return to payments</a>
+    """
     if request.method == "POST":
         update_payment(
             payment_id,
             request.form["payment_date"],
             request.form["amount"],
-            request.form["payment_method"],
-            request.form["status"]
+            request.form["payment_method"]
         )
         return redirect("/payments")
     return render_template(
         "edit_payment.html",
         payment=payment,
+        total=date.today().isoformat(),
         active_page="payments"
     )
 
 @app.route("/delete_payment/<int:payment_id>")
-def delete_payment_route(payment_id):
-    if "user" not in session:
-        return redirect("/login")
+def delete_payment(payment_id):
+    payment = get_payment(payment_id)
+    if payment[5] != "Pending":
+        return """
+        <h2>Approved or rejected payments cannot be deleted.</h2>
+        <a href='/payments'>Return to Payments</a>
+        """
     delete_payment(payment_id)
     return redirect("/payments")
 

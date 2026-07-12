@@ -1,4 +1,5 @@
 import psycopg2
+from datetime import date
 
 conn = psycopg2.connect(
     host='localhost',
@@ -285,22 +286,37 @@ def create_purchase_order(supplier_id, order_date, total_amount):
     conn.commit()
     cur.close()
 
-def get_purchase_orders():
+def get_pending_purchase_orders():
     cur = conn.cursor()
     cur.execute("""
         SELECT
-            purchase_orders.purchase_order_id,
-            suppliers.supplier_name,
-            purchase_orders.order_date,
-            purchase_orders.total_amount
+            purchase_order_id,
+            supplier_name,
+            total_amount
         FROM purchase_orders
         JOIN suppliers
-        ON purchase_orders.supplier_id = suppliers.supplier_id
-        ORDER BY purchase_order_id
+            ON purchase_orders.supplier_id = suppliers.supplier_id
+        WHERE payment_status = 'Pending'
     """)
-    purchase_orders = cur.fetchall()
+    data = cur.fetchall()
     cur.close()
-    return purchase_orders
+    return data
+
+def get_purchase_order_details(purchase_order_id):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            suppliers.supplier_name,
+            purchase_orders.total_amount,
+            purchase_orders.balance
+        FROM purchase_orders
+        JOIN suppliers
+            ON purchase_orders.supplier_id = suppliers.supplier_id
+        WHERE purchase_orders.purchase_order_id = %s
+    """, (purchase_order_id,))
+    details = cur.fetchone()
+    cur.close()
+    return details
 
 def get_purchase_order(purchase_order_id):
     cur = conn.cursor()
@@ -607,9 +623,13 @@ def delete_request_item(request_item_id):
     conn.commit()
     cur.close()
 
-def create_payment(purchase_order_id, amount, payment_method):
+
+def create_payment(
+    purchase_order_id,
+    amount,
+    request.form["payment_method"]
+)
     cur = conn.cursor()
-    # Create the payment
     cur.execute("""
         INSERT INTO payments
         (
@@ -622,44 +642,20 @@ def create_payment(purchase_order_id, amount, payment_method):
         VALUES
         (
             %s,
-            CURRENT_DATE,
+            %s,
             %s,
             %s,
             'Pending'
         )
     """, (
         purchase_order_id,
+        date.today(),
         amount,
         payment_method
     ))
-
-    # Mark purchase order as paid
-    cur.execute("""
-        UPDATE purchase_orders
-        SET payment_status='Paid'
-        WHERE purchase_order_id=%s
-    """, (purchase_order_id,))
     conn.commit()
     cur.close()
 
-def get_payments():
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT
-            payments.payment_id,
-            purchase_orders.purchase_order_id,
-            payments.payment_date,
-            payments.amount,
-            payments.payment_method,
-            payments.status
-        FROM payments
-        JOIN purchase_orders
-        ON payments.purchase_order_id = purchase_orders.purchase_order_id
-        ORDER BY payment_id
-    """)
-    payments = cur.fetchall()
-    cur.close()
-    return payments
 
 def get_payment(payment_id):
     cur = conn.cursor()
@@ -672,22 +668,18 @@ def get_payment(payment_id):
     cur.close()
     return payment
 
-def update_payment(payment_id, purchase_order_id, payment_date, amount, payment_method, status):
+def update_payment(payment_id, amount, payment_method):
     cur = conn.cursor()
     cur.execute("""
         UPDATE payments
-        SET purchase_order_id=%s,
-            payment_date=%s,
+        SET payment_date=%s,
             amount=%s,
-            payment_method=%s,
-            status=%s
+            payment_method=%s
         WHERE payment_id=%s
     """, (
-        purchase_order_id,
         payment_date,
         amount,
         payment_method,
-        status,
         payment_id
     ))
     conn.commit()
@@ -702,20 +694,92 @@ def delete_payment(payment_id):
     conn.commit()
     cur.close()
 
-def approve_payment(payment_id, user_id):
+def approve_payment(payment_id):
     cur = conn.cursor()
+    # Get payment details
+    cur.execute("""
+        SELECT
+            purchase_order_id,
+            amount,
+            status
+        FROM payments
+        WHERE payment_id = %s
+    """, (payment_id,))
+    payment = cur.fetchone()
+    if payment is None:
+        cur.close()
+        return
+    purchase_order_id = payment[0]
+    amount = payment[1]
+    status = payment[2]
+    # Don't approve twice
+    if status == "Approved":
+        cur.close()
+        return
+    # Get current balance
+    cur.execute("""
+        SELECT balance
+        FROM purchase_orders
+        WHERE purchase_order_id=%s
+    """, (purchase_order_id,))
+    current_balance = cur.fetchone()[0]
+    # Prevent overpayment
+    if amount > current_balance:
+        cur.close()
+        return
+    # Calculate new balance
+    new_balance = current_balance - amount
+    if new_balance < 0:
+        new_balance = 0
+    # Approve payment
     cur.execute("""
         UPDATE payments
         SET status='Approved',
-            approved_by=%s,
             approved_date=CURRENT_DATE
         WHERE payment_id=%s
-    """, (user_id, payment_id))
+    """, (payment_id,))
+    # Update balance
+    cur.execute("""
+        UPDATE purchase_orders
+        SET balance=%s
+        WHERE purchase_order_id=%s
+    """, (
+        new_balance,
+        purchase_order_id
+    ))
+    # Update purchase order status
+    if new_balance == 0:
+        cur.execute("""
+            UPDATE purchase_orders
+            SET payment_status='Paid'
+            WHERE purchase_order_id=%s
+        """, (purchase_order_id,))
+    else:
+        cur.execute("""
+            UPDATE purchase_orders
+            SET payment_status='Partially Paid'
+            WHERE purchase_order_id=%s
+        """, (purchase_order_id,))
     conn.commit()
     cur.close()
 
 def reject_payment(payment_id):
     cur = conn.cursor()
+    # Check current status
+    cur.execute("""
+        SELECT status
+        FROM payments
+        WHERE payment_id=%s
+    """, (payment_id,))
+    payment = cur.fetchone()
+    if payment is None:
+        cur.close()
+        return
+    # Don't reject twice
+    if payment[0] == "Rejected":
+        cur.close()
+        return
+    # Update status
     cur.execute("""
         UPDATE payments
         SET status='Rejected'
@@ -767,6 +831,43 @@ def rejected_payments():
     total = cur.fetchone()[0]
     cur.close()
     return total
+
+def get_purchase_orders():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            purchase_orders.purchase_order_id,
+            suppliers.supplier_name,
+            purchase_orders.order_date,
+            purchase_orders.total_amount,
+            purchase_orders.balance,
+            purchase_orders.payment_status
+        FROM purchase_orders
+        JOIN suppliers
+            ON purchase_orders.supplier_id = suppliers.supplier_id
+        ORDER BY purchase_orders.purchase_order_id DESC
+    """)
+    purchase_orders = cur.fetchall()
+    cur.close()
+    return purchase_orders
+
+def get_purchase_order_balance(purchase_order_id):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT total_amount
+        FROM purchase_orders
+        WHERE purchase_order_id=%s
+    """, (purchase_order_id,))
+    total = cur.fetchone()[0]
+   cur.execute("""
+    SELECT COALESCE(SUM(amount),0)
+    FROM payments
+    WHERE purchase_order_id=%s
+    AND status='Approved'
+""", (purchase_order_id,))
+    paid = cur.fetchone()[0]
+    cur.close()
+    return total - paid
 
 def get_low_stock():
     cur = conn.cursor()
