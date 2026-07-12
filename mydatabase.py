@@ -338,17 +338,18 @@ def get_pending_purchase_orders():
     cur = conn.cursor()
     cur.execute("""
         SELECT
-            purchase_order_id,
+            purchase_orders.purchase_order_id,
             supplier_name,
             total_amount
         FROM purchase_orders
         JOIN suppliers
         ON purchase_orders.supplier_id = suppliers.supplier_id
-        WHERE payment_status = 'Pending'
+        WHERE purchase_orders.payment_status = 'Pending'
     """)
     data = cur.fetchall()
     cur.close()
     return data
+
 
 def update_payment_status(payment_id, status):
     cur = conn.cursor()
@@ -606,16 +607,40 @@ def delete_request_item(request_item_id):
     conn.commit()
     cur.close()
 
-def create_payment(purchase_order_id, payment_date, amount, payment_method, status):
+def create_payment(purchase_order_id, amount, payment_method):
     cur = conn.cursor()
+    # Create the payment
     cur.execute("""
         INSERT INTO payments
-        (purchase_order_id, payment_date, amount, payment_method, status)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (purchase_order_id, payment_date, amount, payment_method, status))
+        (
+            purchase_order_id,
+            payment_date,
+            amount,
+            payment_method,
+            status
+        )
+        VALUES
+        (
+            %s,
+            CURRENT_DATE,
+            %s,
+            %s,
+            'Pending'
+        )
+    """, (
+        purchase_order_id,
+        amount,
+        payment_method
+    ))
+
+    # Mark purchase order as paid
+    cur.execute("""
+        UPDATE purchase_orders
+        SET payment_status='Paid'
+        WHERE purchase_order_id=%s
+    """, (purchase_order_id,))
     conn.commit()
     cur.close()
-   
 
 def get_payments():
     cur = conn.cursor()
@@ -698,6 +723,50 @@ def reject_payment(payment_id):
     """, (payment_id,))
     conn.commit()
     cur.close()
+
+def total_payments():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM payments
+    """)
+    total = cur.fetchone()[0]
+    cur.close()
+    return total
+
+def pending_payments():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM payments
+        WHERE status='Pending'
+    """)
+    total = cur.fetchone()[0]
+    cur.close()
+    return total
+
+def approved_payments():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM payments
+        WHERE status='Approved'
+    """)
+    total = cur.fetchone()[0]
+    cur.close()
+    return total
+
+
+def rejected_payments():
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM payments
+        WHERE status='Rejected'
+    """)
+    total = cur.fetchone()[0]
+    cur.close()
+    return total
 
 def get_low_stock():
     cur = conn.cursor()

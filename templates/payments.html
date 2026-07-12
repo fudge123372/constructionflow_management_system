@@ -3,6 +3,45 @@
 Payments
 {% endblock %}
 {% block content %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <h6>Total Payments</h6>
+                <h2>{{ total_payments }}</h2>
+                <i class="bi bi-cash-stack fs-1 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow">
+            <div class="card-body">
+                <h6>Pending</h6>
+                <h2>{{ pending_payments }}</h2>
+                <i class="bi bi-hourglass-split fs-1 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <h6>Approved</h6>
+                <h2>{{ approved_payments }}</h2>
+                <i class="bi bi-check-circle fs-1 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white shadow">
+            <div class="card-body">
+                <h6>Rejected</h6>
+                <h2>{{ rejected_payments }}</h2>
+                <i class="bi bi-x-circle fs-1 float-end"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
 <h3 class="mb-4">
     Pending Payments
 </h3>
@@ -22,10 +61,12 @@ Payments
             <td>{{ po[1] }}</td>
             <td>KES {{ po[2] }}</td>
             <td>
-                <a href="{{ url_for('add_payment') }}" class="btn btn-success btn-sm">
+                {% if session["role"] == "Accountant" %}
+                <a href="/add_payment/{{ po[0] }}" class="btn btn-success btn-sm">
                     <i class="bi bi-cash-coin"></i>
                     Pay
                 </a>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
@@ -45,7 +86,7 @@ Payments
         </tr>
     </thead>
     <tbody>
-    {% for payment in payments %}
+        {% for payment in payments %}
         <tr>
             <td>{{ payment[0] }}</td>
             <td>{{ payment[1] }}</td>
@@ -53,19 +94,31 @@ Payments
             <td>{{ payment[3] }}</td>
             <td>{{ payment[5] }}</td>
             <td>
-                <a href="/edit_payment/{{ payment[0] }}"
-                   class="btn btn-warning btn-sm">
+                {% if payment[5] == "Pending" %}
+                <a href="/edit_payment/{{ payment[0] }}" class="btn btn-warning btn-sm">
                     <i class="bi bi-pencil"></i>
                 </a>
-
-                <a href="/delete_payment/{{ payment[0] }}"
-                   class="btn btn-danger btn-sm"
-                   onclick="return confirm('Delete this payment?')">
+                <a href="/delete_payment/{{ payment[0] }}" class="btn btn-danger btn-sm"
+                    onclick="return confirm('Delete this payment?')">
                     <i class="bi bi-trash"></i>
                 </a>
+                {% if session["role"] == "Accountant" %}
+                <a href="/approve_payment/{{ payment[0] }}" class="btn btn-success btn-sm">
+                    <i class="bi bi-check-circle"></i>
+                </a>
+                <a href="/reject_payment/{{ payment[0] }}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+                {% endif %}
+                {% else %}
+                <span class="badge bg-success">
+                    Locked
+                </span>
+                {% endif %}
+            </td>
             </td>
         </tr>
-    {% endfor %}
+        {% endfor %}
     </tbody>
 </table>
 {% endblock %}

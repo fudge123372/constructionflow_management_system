@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions,create_stock_in,get_stock_in,create_stock_out,get_low_stock,get_recent_activity,approve_payment,reject_payment,update_payment_status
-from datetime import date
+from mydatabase import get_project, get_projects,get_suppliers,get_supplier ,create_project,update_project,delete_project,create_supplier,update_supplier,delete_supplier,login_user,get_materials,get_purchase_order,get_purchase_orders,create_purchase_order,update_purchase_order,delete_purchase_order, get_material_request, get_material_requests, create_material_request, update_material_request, delete_material_request,create_request_item,get_request_item,get_request_items,update_request_item,delete_request_item,create_payment,get_payment,get_payments,update_payment,delete_payment,get_users,get_user,create_user,update_user,delete_user,get_roles,get_role,create_role,update_role,delete_role,get_inventory_transactions,create_stock_in,get_stock_in,create_stock_out,get_low_stock,get_recent_activity,approve_payment,reject_payment,update_payment_status,total_payments,pending_payments,approved_payments,rejected_payments,get_pending_purchase_orders
+from datetime import datetime,date
+
+today=date.today()
 
 app = Flask(__name__)
 app.secret_key = "buildtrack123"
@@ -433,17 +435,33 @@ def payments():
     if "user" not in session:
         return redirect("/login")
     payments = get_payments()
-    pending_orders=get_purchase_orders()
+    pending_orders = get_pending_purchase_orders()
     return render_template(
         "payments.html",
         payments=payments,
         pending_orders=pending_orders,
+        total_payments=total_payments(),
+        pending_payments=pending_payments(),
+        approved_payments=approved_payments(),
+        rejected_payments=rejected_payments(),
         active_page="payments"
     )
 
-@app.route("/add_payment", methods=["GET", "POST"])
-def add_payment():
+
+
+@app.route("/add_payment/<int:purchase_order_id>", methods=["GET", "POST"])
+def add_payment(purchase_order_id):
+    if "user" not in session:
+        return redirect("/login")
+    if session["role"] != "Accountant":
+        return "Access Denied", 403
     if request.method == "POST":
+        payment_date = datetime.strptime(
+            request.form["payment_date"],
+            "%Y-%m-%d"
+        ).date()
+        if payment_date > date.today():
+            return "Future payment dates are not allowed."
         create_payment(
             request.form["purchase_order_id"],
             request.form["payment_date"],
@@ -457,7 +475,7 @@ def add_payment():
         "add_payment.html",
         purchase_orders=purchase_orders,
         active_page="payments"
-    )
+        )
 
 
 @app.route("/edit_payment/<int:payment_id>", methods=["GET","POST"])

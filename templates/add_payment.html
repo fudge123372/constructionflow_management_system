@@ -11,17 +11,12 @@ Add Payment
         <form method="POST">
             <div class="mb-3">
                 <label>Purchase Order</label>
-                <select name="purchase_order_id" class="form-control">
-                    {% for po in purchase_orders %}
-                    <option value="{{ po[0] }}">
-                        Purchase Order #{{ po[0] }}
-                    </option>
-                    {% endfor %}
-                </select>
+                <input type="text" class="form-control" value="PO #{{ purchase_order_id }}" readonly>
+                <input type="hidden" name="purchase_order_id" value="{{ purchase_order_id }}">
             </div>
             <div class="mb-3">
                 <label>Payment Date</label>
-                <input type="date" name="payment_date" class="form-control" required>
+                <input type="date" name="payment_date" class="form-control" max="{{ today }}" required>
             </div>
             <div class="mb-3">
                 <label>Amount</label>
