@@ -35,36 +35,46 @@ Add Payment
                                     KES {{ balance }}
                                 </span>
                             </p>
+                            {% if balance == total_amount %}
+                            <div class="alert alert-warning">
+                                This Purchase Order has not been paid yet.
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                This Purchase Order is partially paid.
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
             <div class="mb-3">
-                <label>Amount</label>
-                <input
-                    type="number"
-                    name="amount"
-                    class="form-control"
-                    min="1"
-                    max="{{ balance }}"
-                    step="0.01"
+                <label class="form-label">
+                    Payment Date
+                </label>
+                <input type="date" name="payment_date" class="form-control" max="{{ today }}" value="{{ today }}"
                     required>
             </div>
             <div class="mb-3">
-                <label>Payment Method</label>
-                <select
-                    name="payment_method"
-                    class="form-control"
+                <label class="form-label">
+                    Amount
+                </label>
+                <input type="number" name="amount" class="form-control" min="1" max="{{ balance }}" step="0.01"
                     required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">
+                    Payment Method
+                </label>
+                <select name="payment_method" class="form-control" required>
                     <option value="">Select Payment Method</option>
-                    <option>Cash</option>
-                    <option>Bank Transfer</option>
-                    <option>Cheque</option>
-                    <option>M-Pesa</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="M-Pesa">M-Pesa</option>
                 </select>
             </div>
-            <button class="btn btn-success">
-                <i class="bi bi-cash-stack"></i>
+            <button type="submit" class="btn btn-success w-100">
                 Save Payment
             </button>
             {% if error %}

@@ -114,11 +114,13 @@ def stock_in():
         return "Access Denied",403
     if request.method=="POST":
         create_stock_in(
+            request.form["supplier_id"],
             request.form["material_id"],
             request.form["quantity"],
             request.form["reference"],
             session["user_id"]
         )
+    
         return redirect("/inventory")
     materials=get_materials()
     return render_template(
@@ -367,19 +369,7 @@ def login():
         )
     return  render_template("login.html")
 
-@app.route("/approve_payment/<int:payment_id>")
-def approve_payment_route(payment_id):
-    if session["role"] != "Accountant":
-        return "Unauthorized"
-    approve_payment(payment_id)
-    return redirect("/payments")
 
-@app.route("/reject_payment/<int:payment_id>")
-def reject_payment_route(payment_id):
-    if session["role"] != "Accountant":
-        return "Unauthorized"
-    reject_payment(payment_id)
-    return redirect("/payments")
 
 @app.route("/request_items")
 def request_items():
@@ -437,12 +427,11 @@ def delete_request_item_route(request_item_id):
 def payments():
     if "user" not in session:
         return redirect("/login")
-    payments = get_payments()
-    pending_orders = get_pending_purchase_orders()
+
     return render_template(
         "payments.html",
-        payments=payments,
-        pending_orders=pending_orders,
+        payments=get_payments(),
+        pending_orders=get_pending_purchase_orders(),
         total_payments=total_payments(),
         pending_payments=pending_payments(),
         approved_payments=approved_payments(),
@@ -450,46 +439,69 @@ def payments():
         active_page="payments"
     )
 
+
 @app.route("/add_payment/<int:purchase_order_id>", methods=["GET", "POST"])
 def add_payment(purchase_order_id):
     if "user" not in session:
         return redirect("/login")
-    if request.method == "POST":
-        amount = float(request.form["amount"])
-        balance = get_purchase_order_balance(purchase_order_id)
-        if amount > balance:
-            return f"You cannot pay more than the remaining balance (KES {balance})."
-        create_payment(
-            purchase_order_id,
-            amount,
-            request.form["payment_method"]
-        )
-        return redirect("/payments")
     details = get_purchase_order_details(purchase_order_id)
-    supplier = details[0]
-    total_amount= details[1]
-    balance=details[2]
+    if details is None:
+        return "Purchase Order not found.", 404
+    supplier = details[1]
+    total_amount = details[2]
+    balance = details[3]
+    if request.method == "POST":
+        payment_date = datetime.strptime(
+            request.form["payment_date"],
+            "%Y-%m-%d"
+        ).date()
+        if payment_date > date.today():
+            return render_template(
+                "add_payment.html",
+                purchase_order_id=purchase_order_id,
+                supplier=supplier,
+                total_amount=total_amount,
+                balance=balance,
+                today=date.today(),
+                error="Future payment dates are not allowed.",
+                active_page="payments"
+            )
+        amount = float(request.form["amount"])
+        if amount > balance:
+            return render_template(
+                "add_payment.html",
+                purchase_order_id=purchase_order_id,
+                supplier=supplier,
+                total_amount=total_amount,
+                balance=balance,
+                today=date.today(),
+                error="Payment cannot exceed remaining balance.",
+                active_page="payments"
+            )
+        payment_id = create_payment(
+            purchase_order_id,
+            payment_date,
+            amount,
+            request.form["payment_method"],
+            "Pending"
+        )
+        approve_payment(payment_id)
+        return redirect("/payments")
     return render_template(
         "add_payment.html",
         purchase_order_id=purchase_order_id,
-        supplier=details[0],
+        supplier=supplier,
         total_amount=total_amount,
         balance=balance,
         today=date.today(),
         active_page="payments"
     )
 
-
 @app.route("/edit_payment/<int:payment_id>", methods=["GET", "POST"])
 def edit_payment(payment_id):
     if "user" not in session:
         return redirect("/login")
     payment = get_payment(payment_id)
-    if payment[5] !="Pending":
-        return"""
-    <h2>This paymnent has already been approved or rejected.</h2>
-    <a href='/payments'>Return to payments</a>
-    """
     if request.method == "POST":
         update_payment(
             payment_id,
@@ -501,34 +513,30 @@ def edit_payment(payment_id):
     return render_template(
         "edit_payment.html",
         payment=payment,
-        total=date.today().isoformat(),
         active_page="payments"
     )
 
 @app.route("/delete_payment/<int:payment_id>")
-def delete_payment(payment_id):
-    payment = get_payment(payment_id)
-    if payment[5] != "Pending":
-        return """
-        <h2>Approved or rejected payments cannot be deleted.</h2>
-        <a href='/payments'>Return to Payments</a>
-        """
+def delete_payment_route(payment_id):
+    if "user" not in session:
+        return redirect("/login")
     delete_payment(payment_id)
     return redirect("/payments")
 
 @app.route("/approve_payment/<int:payment_id>")
-def approve_payment(payment_id):
-    if session["role"] != "Accountant":
-        return "Access Denied",403
-    update_payment_status(payment_id,"Approved")
+def approve_payment_route(payment_id):
+    if "user" not in session:
+        return redirect("/login")
+    approve_payment(payment_id)
     return redirect("/payments")
 
 @app.route("/reject_payment/<int:payment_id>")
-def reject_payment(payment_id):
-    if session["role"] != "Accountant":
-        return "Access Denied",403
-    update_payment_status(payment_id,"Rejected")
+def reject_payment_route(payment_id):
+    if "user" not in session:
+        return redirect("/login")
+    reject_payment(payment_id)
     return redirect("/payments")
+
 
 @app.route("/roles")
 def roles():

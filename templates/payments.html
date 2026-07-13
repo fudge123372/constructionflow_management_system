@@ -96,13 +96,15 @@ Payments
             <td>{{ payment[2] }}</td>
             <td>
                 {% if payment[5] == "Pending" %}
-                <span class="badge bg-warning">
-                    Pending
+                <span class="badge bg-warning text-dark">
+                    Awaiting Approval
                 </span>
+
                 {% elif payment[5] == "Approved" %}
                 <span class="badge bg-success">
                     Approved
                 </span>
+
                 {% else %}
                 <span class="badge bg-danger">
                     Rejected
