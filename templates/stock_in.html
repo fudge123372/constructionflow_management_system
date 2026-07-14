@@ -22,7 +22,7 @@ Stock In
             </div>
             <div class="mb-3">
                 <label>Supplier</label>
-                <select name="supplier_id" class="form-control">
+                <select name="supplier_id" class="form-control" required>
                     {% for supplier in suppliers %}
                     <option value="{{ supplier[0] }}">
                         {{ supplier[1] }}

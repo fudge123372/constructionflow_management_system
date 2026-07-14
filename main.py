@@ -41,6 +41,7 @@ def suppliers():
 def dashboard():
     if "user" not in session:
         return redirect("/login")
+    role = session["role"]
     projects = get_projects()
     suppliers = get_suppliers()
     materials = get_materials()
@@ -55,17 +56,19 @@ def dashboard():
     ]
     return render_template(
         "dashboard.html",
+        role=role,
         active_page="dashboard",
         total_projects=len(projects),
         total_suppliers=len(suppliers),
         total_materials=len(materials),
         total_requests=len(requests),
         total_payments=len(payments),
-        activities=activities,
-        low_stock=low_stock,
+        activities=activities[:5],
+        low_stock=low_stock[:5],
         projects=projects[:5],
         requests=pending_requests[:5],
-        inventory=inventory[:5]
+        inventory=inventory[:5],
+        today=date.today()
     )
 
 @app.route("/materials")
@@ -114,18 +117,20 @@ def stock_in():
         return "Access Denied",403
     if request.method=="POST":
         create_stock_in(
-            request.form["supplier_id"],
             request.form["material_id"],
             request.form["quantity"],
+            request.form["supplier_id"],
             request.form["reference"],
             session["user_id"]
         )
     
         return redirect("/inventory")
     materials=get_materials()
+    suppliers=get_suppliers()
     return render_template(
         "stock_in.html",
         materials=materials,
+        suppliers=suppliers,
         active_page="inventory"
     )
 
